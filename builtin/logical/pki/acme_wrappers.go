@@ -151,7 +151,7 @@ func (b *backend) acmeParsedWrapper(op acmeParsedOperation) framework.OperationF
 			// format. Rather than expecting everything to handle creating
 			// ACME-formatted responses, do the marshaling in one place.
 			if _, ok := resp.Data[logical.HTTPRawBody]; !ok {
-				ignored_values := map[string]bool{logical.HTTPContentType: true, logical.HTTPStatusCode: true}
+				ignored_values := map[string]struct{}{logical.HTTPContentType: {}, logical.HTTPStatusCode: {}}
 				fields := map[string]interface{}{}
 				body := map[string]interface{}{
 					logical.HTTPContentType: "application/json",
