@@ -552,7 +552,7 @@ func processAnyCliqueOrCycle(
 		// processed before processing this closure.
 		var cliques [][]issuerID
 		var cycles [][]issuerID
-		closure := make(map[issuerID]bool)
+		closure := make(map[issuerID]struct{})
 
 		var cliquesToProcess []issuerID
 		cliquesToProcess = append(cliquesToProcess, issuer)
@@ -566,7 +566,7 @@ func processAnyCliqueOrCycle(
 			if processed, ok := processedIssuers[node]; ok && processed {
 				continue
 			}
-			if nodeInClosure, ok := closure[node]; ok && nodeInClosure {
+			if _, ok := closure[node]; ok {
 				continue
 			}
 
@@ -584,7 +584,7 @@ func processAnyCliqueOrCycle(
 			// all nodes to closure.
 			cliques = append(cliques, cliqueNodes)
 			for _, node := range cliqueNodes {
-				closure[node] = true
+				closure[node] = struct{}{}
 			}
 
 			// Try and expand the clique to see if there's common cycles around
@@ -622,7 +622,7 @@ func processAnyCliqueOrCycle(
 					cliquesToProcess = append(cliquesToProcess, children...)
 
 					// While we're here, add this cycle node to the closure.
-					closure[cycleNode] = true
+					closure[cycleNode] = struct{}{}
 				}
 			}
 		}
@@ -753,10 +753,10 @@ func processAnyCliqueOrCycle(
 			return nil, err
 		}
 
-		closure := make(map[issuerID]bool)
+		closure := make(map[issuerID]struct{})
 		for _, cycle := range cycles {
 			for _, node := range cycle {
-				closure[node] = true
+				closure[node] = struct{}{}
 			}
 		}
 
@@ -1299,7 +1299,7 @@ func reversedCycle(cycle []issuerID) []issuerID {
 func computeParentsFromClosure(
 	processedIssuers map[issuerID]bool,
 	issuerIdParentsMap map[issuerID][]issuerID,
-	closure map[issuerID]bool,
+	closure map[issuerID]struct{},
 ) (map[issuerID]bool, bool) {
 	parents := make(map[issuerID]bool)
 	for node := range closure {
@@ -1309,7 +1309,7 @@ func computeParentsFromClosure(
 		}
 
 		for _, parent := range nodeParents {
-			if nodeInClosure, ok := closure[parent]; ok && nodeInClosure {
+			if _, ok := closure[parent]; ok {
 				continue
 			}
 
