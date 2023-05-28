@@ -1580,7 +1580,7 @@ func (i *IdentityStore) sanitizeAndUpsertGroup(ctx context.Context, group *ident
 			// it reaches back to groupID. If it does, then it's a loop.
 
 			// Created a visited set
-			visited := make(map[string]bool)
+			visited := make(map[string]struct{})
 			cycleDetected, err := i.detectCycleDFS(visited, groupByID.ID, memberGroupID)
 			if err != nil {
 				return fmt.Errorf("failed to perform cyclic relationship detection for member group ID %q", memberGroupID)
@@ -2015,7 +2015,7 @@ func (i *IdentityStore) groupPoliciesByEntityID(entityID string) (map[string][]s
 		return nil, err
 	}
 
-	visited := make(map[string]bool)
+	visited := make(map[string]struct{})
 	policies := make(map[string][]string)
 	for _, group := range groups {
 		err := i.collectPoliciesReverseDFS(group, visited, policies)
@@ -2037,7 +2037,7 @@ func (i *IdentityStore) groupsByEntityID(entityID string) ([]*identity.Group, []
 		return nil, nil, err
 	}
 
-	visited := make(map[string]bool)
+	visited := make(map[string]struct{})
 	var tGroups []*identity.Group
 	for _, group := range groups {
 		gGroups, err := i.collectGroupsReverseDFS(group, visited, nil)
@@ -2069,16 +2069,16 @@ func (i *IdentityStore) groupsByEntityID(entityID string) ([]*identity.Group, []
 	return diff.Unmodified, diff.New, nil
 }
 
-func (i *IdentityStore) collectGroupsReverseDFS(group *identity.Group, visited map[string]bool, groups []*identity.Group) ([]*identity.Group, error) {
+func (i *IdentityStore) collectGroupsReverseDFS(group *identity.Group, visited map[string]struct{}, groups []*identity.Group) ([]*identity.Group, error) {
 	if group == nil {
 		return nil, fmt.Errorf("nil group")
 	}
 
 	// If traversal for a groupID is performed before, skip it
-	if visited[group.ID] {
+	if _, ok := visited[group.ID]; ok {
 		return groups, nil
 	}
-	visited[group.ID] = true
+	visited[group.ID] = struct{}{}
 
 	groups = append(groups, group)
 
@@ -2100,16 +2100,16 @@ func (i *IdentityStore) collectGroupsReverseDFS(group *identity.Group, visited m
 	return groups, nil
 }
 
-func (i *IdentityStore) collectPoliciesReverseDFS(group *identity.Group, visited map[string]bool, policies map[string][]string) error {
+func (i *IdentityStore) collectPoliciesReverseDFS(group *identity.Group, visited map[string]struct{}, policies map[string][]string) error {
 	if group == nil {
 		return fmt.Errorf("nil group")
 	}
 
 	// If traversal for a groupID is performed before, skip it
-	if visited[group.ID] {
+	if _, ok := visited[group.ID]; ok {
 		return nil
 	}
-	visited[group.ID] = true
+	visited[group.ID] = struct{}{}
 
 	policies[group.NamespaceID] = append(policies[group.NamespaceID], group.Policies...)
 
@@ -2131,17 +2131,17 @@ func (i *IdentityStore) collectPoliciesReverseDFS(group *identity.Group, visited
 	return nil
 }
 
-func (i *IdentityStore) detectCycleDFS(visited map[string]bool, startingGroupID, groupID string) (bool, error) {
+func (i *IdentityStore) detectCycleDFS(visited map[string]struct{}, startingGroupID, groupID string) (bool, error) {
 	// If the traversal reaches the startingGroupID, a loop is detected
 	if startingGroupID == groupID {
 		return true, nil
 	}
 
 	// If traversal for a groupID is performed before, skip it
-	if visited[groupID] {
+	if _, ok := visited[groupID]; ok {
 		return false, nil
 	}
-	visited[groupID] = true
+	visited[groupID] = struct{}{}
 
 	group, err := i.MemDBGroupByID(groupID, true)
 	if err != nil {
