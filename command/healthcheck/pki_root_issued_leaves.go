@@ -160,14 +160,14 @@ func (h *RootIssuedLeaves) Evaluate(e *Executor) (results []*Result, err error) 
 		}
 	}
 
-	issuerHasLeaf := make(map[string]bool)
+	issuerHasLeaf := make(map[string]struct{})
 	for serial, leaf := range h.LeafCertMap {
 		if len(issuerHasLeaf) == len(h.RootCertMap) {
 			break
 		}
 
 		for issuer, root := range h.RootCertMap {
-			if issuerHasLeaf[issuer] {
+			if _, ok := issuerHasLeaf[issuer]; ok {
 				continue
 			}
 
@@ -185,7 +185,7 @@ func (h *RootIssuedLeaves) Evaluate(e *Executor) (results []*Result, err error) 
 				Message:  fmt.Sprintf("Root issuer has directly issued non-CA leaf certificates (%v) instead of via an intermediate CA. This can make rotating the root CA harder as direct cross-signing of the roots must be used, rather than cross-signing of the intermediates. It is encouraged to set up and use an intermediate CA and tidy the mount when all directly issued leaves have expired.", serial),
 			}
 
-			issuerHasLeaf[issuer] = true
+			issuerHasLeaf[issuer] = struct{}{}
 
 			results = append(results, &ret)
 		}
