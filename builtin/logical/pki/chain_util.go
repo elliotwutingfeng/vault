@@ -1097,7 +1097,7 @@ func findAllCyclesWithNode(
 	// Whether we've visited any given node.
 	cycleVisited := make(map[issuerID]bool)
 	visitCounts := make(map[issuerID]int)
-	parentCounts := make(map[issuerID]map[issuerID]bool)
+	parentCounts := make(map[issuerID]map[issuerID]struct{})
 
 	// Paths to the specified node. Some of these might be cycles.
 	pathsTo := make(map[issuerID][][]issuerID)
@@ -1161,11 +1161,11 @@ func findAllCyclesWithNode(
 			// Track this parent->child relationship to know when to exit.
 			setOfParents, ok := parentCounts[child]
 			if !ok {
-				setOfParents = make(map[issuerID]bool)
+				setOfParents = make(map[issuerID]struct{})
 				parentCounts[child] = setOfParents
 			}
 			_, existingParent := setOfParents[current]
-			setOfParents[current] = true
+			setOfParents[current] = struct{}{}
 
 			// Since we know that we can visit this node, we should now build
 			// all destination paths using this node, from our current node.
