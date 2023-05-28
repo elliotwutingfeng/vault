@@ -563,8 +563,8 @@ func (c *Client) GetLdapGroups(cfg *ConfigEntry, conn Connection, userDN string,
 		return nil, err
 	}
 
-	// retrieve the groups in a string/bool map as a structure to avoid duplicates inside
-	ldapMap := make(map[string]bool)
+	// retrieve the groups in a string/struct{} map as a structure to avoid duplicates inside
+	ldapMap := make(map[string]struct{})
 
 	for _, e := range entries {
 		dn, err := ldap.ParseDN(e.DN)
@@ -577,12 +577,12 @@ func (c *Client) GetLdapGroups(cfg *ConfigEntry, conn Connection, userDN string,
 		if len(values) > 0 {
 			for _, val := range values {
 				groupCN := getCN(cfg, val)
-				ldapMap[groupCN] = true
+				ldapMap[groupCN] = struct{}{}
 			}
 		} else {
 			// If groupattr didn't resolve, use self (enumerating group objects)
 			groupCN := getCN(cfg, e.DN)
-			ldapMap[groupCN] = true
+			ldapMap[groupCN] = struct{}{}
 		}
 	}
 
