@@ -2009,7 +2009,7 @@ func getUnifiedRevokedCertEntries(sc *storageContext, issuerIDCertMap map[issuer
 	// serial which'd be an intentional violation of RFC 5280 before importing
 	// an issuer into Vault, and would be highly unlikely within Vault, due
 	// to 120-bit random serial numbers.
-	foundSerials := make(map[string]bool)
+	foundSerials := make(map[string]struct{})
 
 	// Then for every cluster, we find its revoked certificates...
 	for _, clusterId := range clusterIds {
@@ -2060,11 +2060,11 @@ func getUnifiedRevokedCertEntries(sc *storageContext, issuerIDCertMap map[issuer
 
 			revEntry.RevocationTime = xRevEntry.RevocationTimeUTC
 
-			if found, inFoundMap := foundSerials[normalizeSerial(serial)]; found && inFoundMap {
+			if _, inFoundMap := foundSerials[normalizeSerial(serial)]; inFoundMap {
 				// Serial has already been added to the CRL.
 				continue
 			}
-			foundSerials[normalizeSerial(serial)] = true
+			foundSerials[normalizeSerial(serial)] = struct{}{}
 
 			// Finally, add it to the correct mapping.
 			_, present := issuerIDCertMap[xRevEntry.CertificateIssuer]
