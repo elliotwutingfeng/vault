@@ -96,7 +96,7 @@ func (b *backend) tidySecretIDinternal(s logical.Storage) {
 		if err != nil {
 			return err
 		}
-		skipHashes := make(map[string]bool, len(accessorHashes))
+		skipHashes := make(map[string]struct{}, len(accessorHashes))
 		accHashesByLockID := make([][]tidyHelperSecretIDAccessor, 256)
 		for _, accessorHash := range accessorHashes {
 			var entry secretIDAccessorStorageEntry
@@ -178,7 +178,7 @@ func (b *backend) tidySecretIDinternal(s logical.Storage) {
 
 			// At this point, the secret ID is not expired and is valid. Flag
 			// the corresponding accessor as not needing attention.
-			skipHashes[salt.SaltID(result.SecretIDAccessor)] = true
+			skipHashes[salt.SaltID(result.SecretIDAccessor)] = struct{}{}
 
 			return nil
 		}
