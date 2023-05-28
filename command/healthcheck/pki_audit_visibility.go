@@ -59,14 +59,14 @@ type AuditVisibility struct {
 	Enabled            bool
 	UnsupportedVersion bool
 
-	IgnoredParameters map[string]bool
+	IgnoredParameters map[string]struct{}
 	TuneData          map[string]interface{}
 	Fetcher           *PathFetch
 }
 
 func NewAuditVisibilityCheck() Check {
 	return &AuditVisibility{
-		IgnoredParameters: make(map[string]bool),
+		IgnoredParameters: make(map[string]struct{}),
 	}
 }
 
@@ -92,7 +92,7 @@ func (h *AuditVisibility) LoadConfig(config map[string]interface{}) error {
 		return fmt.Errorf("error parsing %v.ignored_parameters: %v", h.Name(), err)
 	}
 	for _, ignored := range coerced {
-		h.IgnoredParameters[ignored] = true
+		h.IgnoredParameters[ignored] = struct{}{}
 	}
 
 	h.Enabled, err = parseutil.ParseBool(config["enabled"])
