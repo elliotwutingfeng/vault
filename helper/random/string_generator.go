@@ -295,14 +295,14 @@ func deduplicateRunes(original []rune) (deduped []rune) {
 		return nil
 	}
 
-	m := map[rune]bool{}
+	m := map[rune]struct{}{}
 	dedupedRunes := []rune(nil)
 
 	for _, r := range original {
-		if m[r] {
+		if _, ok := m[r]; ok {
 			continue
 		}
-		m[r] = true
+		m[r] = struct{}{}
 		dedupedRunes = append(dedupedRunes, r)
 	}
 
