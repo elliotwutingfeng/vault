@@ -411,7 +411,7 @@ func (p *Predict) plugins(pluginTypes ...api.PluginType) []string {
 	}
 
 	var plugins []string
-	pluginsAdded := make(map[string]bool)
+	pluginsAdded := make(map[string]struct{})
 	for _, pluginType := range pluginTypes {
 		result, err := client.Sys().ListPlugins(&api.ListPluginsInput{Type: api.PluginType(pluginType)})
 		if err != nil {
@@ -424,7 +424,7 @@ func (p *Predict) plugins(pluginTypes ...api.PluginType) []string {
 			for _, name := range names {
 				if _, ok := pluginsAdded[name]; !ok {
 					plugins = append(plugins, name)
-					pluginsAdded[name] = true
+					pluginsAdded[name] = struct{}{}
 				}
 			}
 		}
