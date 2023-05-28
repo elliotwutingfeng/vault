@@ -2464,9 +2464,9 @@ func (i *IdentityStore) entityHasAssignment(ctx context.Context, s logical.Stora
 	if err != nil {
 		return false, err
 	}
-	entityGroupIDs := make(map[string]bool)
+	entityGroupIDs := make(map[string]struct{})
 	for _, group := range append(groups, inheritedGroups...) {
-		entityGroupIDs[group.GetID()] = true
+		entityGroupIDs[group.GetID()] = struct{}{}
 	}
 
 	for _, a := range assignments {
@@ -2480,7 +2480,7 @@ func (i *IdentityStore) entityHasAssignment(ctx context.Context, s logical.Stora
 
 		// Check if the entity is a member of any groups in the assignment
 		for _, id := range assignment.GroupIDs {
-			if entityGroupIDs[id] {
+			if _, ok := entityGroupIDs[id]; ok {
 				return true, nil
 			}
 		}
