@@ -19,19 +19,19 @@ func EquivalentPolicies(a, b []string) bool {
 	}
 
 	// First we'll build maps to ensure unique values and filter default
-	mapA := map[string]bool{}
-	mapB := map[string]bool{}
+	mapA := map[string]struct{}{}
+	mapB := map[string]struct{}{}
 	for _, keyA := range a {
 		if keyA == "default" {
 			continue
 		}
-		mapA[keyA] = true
+		mapA[keyA] = struct{}{}
 	}
 	for _, keyB := range b {
 		if keyB == "default" {
 			continue
 		}
-		mapB[keyB] = true
+		mapB[keyB] = struct{}{}
 	}
 
 	// Now we'll build our checking slices
