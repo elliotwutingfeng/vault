@@ -219,13 +219,13 @@ func Combine(parts [][]byte) ([]byte, error) {
 
 	// Set the x value for each sample and ensure no x_sample values are the same,
 	// otherwise div() can be unhappy
-	checkMap := map[byte]bool{}
+	checkMap := map[byte]struct{}{}
 	for i, part := range parts {
 		samp := part[firstPartLen-1]
-		if exists := checkMap[samp]; exists {
+		if _, exists := checkMap[samp]; exists {
 			return nil, fmt.Errorf("duplicate part detected")
 		}
-		checkMap[samp] = true
+		checkMap[samp] = struct{}{}
 		x_samples[i] = samp
 	}
 
