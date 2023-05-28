@@ -2398,7 +2398,7 @@ func (ts *TokenStore) handleTidy(ctx context.Context, req *logical.Request, data
 				deletedCountInvalidTokenInAccessor,
 				deletedCountInvalidCubbyholeKey int64
 
-			validCubbyholeKeys := make(map[string]bool)
+			validCubbyholeKeys := make(map[string]struct{})
 
 			// For each of the accessor, see if the token ID associated with it is
 			// a valid one. If not, delete the leases associated with that token
@@ -2492,13 +2492,13 @@ func (ts *TokenStore) handleTidy(ctx context.Context, req *logical.Request, data
 							tidyErrors = multierror.Append(tidyErrors, fmt.Errorf("failed to create salted token id: %w", err))
 							continue
 						}
-						validCubbyholeKeys[salt.SaltID(ts.cubbyholeBackend.saltUUID, saltedID, salt.SHA1Hash)] = true
+						validCubbyholeKeys[salt.SaltID(ts.cubbyholeBackend.saltUUID, saltedID, salt.SHA1Hash)] = struct{}{}
 					default:
 						if te.CubbyholeID == "" {
 							tidyErrors = multierror.Append(tidyErrors, fmt.Errorf("missing cubbyhole ID for a valid token"))
 							continue
 						}
-						validCubbyholeKeys[te.CubbyholeID] = true
+						validCubbyholeKeys[te.CubbyholeID] = struct{}{}
 					}
 				}
 			}
@@ -2512,7 +2512,7 @@ func (ts *TokenStore) handleTidy(ctx context.Context, req *logical.Request, data
 				}
 
 				key := strings.TrimSuffix(key, "/")
-				if !validCubbyholeKeys[key] {
+				if _, ok := validCubbyholeKeys[key]; !ok {
 					ts.logger.Info("deleting invalid cubbyhole", "key", key)
 					err = ts.cubbyholeBackend.revoke(quitCtx, bview, key)
 					if err != nil {
