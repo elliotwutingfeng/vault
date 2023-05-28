@@ -1631,7 +1631,7 @@ func (i *IdentityStore) pathOIDCReadProviderPublicKeys(ctx context.Context, req 
 // referenced by the clients' targetIDs.
 // If targetIDs contains "*" then the IDs for all public keys are returned.
 func (i *IdentityStore) keyIDsReferencedByTargetClientIDs(ctx context.Context, s logical.Storage, targetIDs []string) ([]string, error) {
-	keyNames := make(map[string]bool)
+	keyNames := make(map[string]struct{})
 
 	// Get all key names referenced by clients if wildcard "*" in target client IDs
 	if strutil.StrListContains(targetIDs, "*") {
@@ -1641,7 +1641,7 @@ func (i *IdentityStore) keyIDsReferencedByTargetClientIDs(ctx context.Context, s
 		}
 
 		for _, client := range clients {
-			keyNames[client.Key] = true
+			keyNames[client.Key] = struct{}{}
 		}
 	}
 
@@ -1654,7 +1654,7 @@ func (i *IdentityStore) keyIDsReferencedByTargetClientIDs(ctx context.Context, s
 			}
 
 			if client != nil {
-				keyNames[client.Key] = true
+				keyNames[client.Key] = struct{}{}
 			}
 		}
 	}
