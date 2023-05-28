@@ -77,7 +77,7 @@ func TestStringGenerator_Generate_successful(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), test.timeout)
 			defer cancel()
 
-			runeset := map[rune]bool{}
+			runeset := map[rune]struct{}{}
 			runesFound := []rune{}
 
 			for i := 0; i < 100; i++ {
@@ -86,10 +86,10 @@ func TestStringGenerator_Generate_successful(t *testing.T) {
 					t.Fatalf("no error expected, but got: %s", err)
 				}
 				for _, r := range actual {
-					if runeset[r] {
+					if _, ok := runeset[r]; ok {
 						continue
 					}
-					runeset[r] = true
+					runeset[r] = struct{}{}
 					runesFound = append(runesFound, r)
 				}
 			}
@@ -282,7 +282,7 @@ func TestRandomRunes_successful(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			runeset := map[rune]bool{}
+			runeset := map[rune]struct{}{}
 			runesFound := []rune{}
 
 			for i := 0; i < 10000; i++ {
@@ -291,10 +291,10 @@ func TestRandomRunes_successful(t *testing.T) {
 					t.Fatalf("no error expected, but got: %s", err)
 				}
 				for _, r := range actual {
-					if runeset[r] {
+					if _, ok := runeset[r]; ok {
 						continue
 					}
-					runeset[r] = true
+					runeset[r] = struct{}{}
 					runesFound = append(runesFound, r)
 				}
 			}
