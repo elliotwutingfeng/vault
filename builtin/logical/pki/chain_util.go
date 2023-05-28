@@ -261,7 +261,7 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 	// manually building their chain prior to starting the topographical sort.
 	//
 	// This thus runs in O(|V| + |E|) -> O(n^2) in the number of issuers.
-	processedIssuers := make(map[issuerID]bool, len(issuers))
+	processedIssuers := make(map[issuerID]struct{}, len(issuers))
 	toVisit := make([]issuerID, 0, len(issuers))
 
 	// Handle any explicitly constructed certificate chains. Here, we don't
@@ -286,7 +286,7 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 		}
 
 		// Mark this node as processed and add its children.
-		processedIssuers[candidate] = true
+		processedIssuers[candidate] = struct{}{}
 		children, ok := issuerIdChildrenMap[candidate]
 		if !ok {
 			continue
@@ -342,7 +342,7 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 
 		// Self-loops and cross-signing might lead to this node already being
 		// processed; skip it on the second pass.
-		if processed, ok := processedIssuers[issuer]; ok && processed {
+		if _, ok := processedIssuers[issuer]; ok {
 			continue
 		}
 
@@ -354,7 +354,7 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 			// For each parent, validate that we've processed it.
 			mustSkip := false
 			for _, parentCert := range parentCerts {
-				if processed, ok := processedIssuers[parentCert]; !ok || !processed {
+				if _, ok := processedIssuers[parentCert]; !ok {
 					mustSkip = true
 					break
 				}
@@ -419,7 +419,7 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 
 		// Now, mark this node as processed and go and visit all of its
 		// children.
-		processedIssuers[issuer] = true
+		processedIssuers[issuer] = struct{}{}
 
 		childrenCerts, ok := issuerIdChildrenMap[issuer]
 		if ok && len(childrenCerts) > 0 {
@@ -432,9 +432,9 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 	// self-loops.
 	var msg string
 	for _, issuer := range issuers {
-		if visited, ok := processedIssuers[issuer]; !ok || !visited {
+		if _, ok := processedIssuers[issuer]; !ok {
 			pretty := prettyIssuer(issuerIdEntryMap, issuer)
-			msg += fmt.Sprintf("[failed to build chain correctly: unprocessed issuer %v: ok: %v; visited: %v]\n", pretty, ok, visited)
+			msg += fmt.Sprintf("[failed to build chain correctly: unprocessed issuer %v: ok: %v]\n", pretty, ok)
 		}
 	}
 	if len(msg) > 0 {
@@ -481,7 +481,7 @@ func addToChainIfNotExisting(includedParentCerts map[string]struct{}, entry *iss
 
 func processAnyCliqueOrCycle(
 	issuers []issuerID,
-	processedIssuers map[issuerID]bool,
+	processedIssuers map[issuerID]struct{},
 	toVisit []issuerID,
 	issuerIdEntryMap map[issuerID]*issuerEntry,
 	issuerIdCertMap map[issuerID]*x509.Certificate,
@@ -535,7 +535,7 @@ func processAnyCliqueOrCycle(
 
 	for _, issuer := range issuers {
 		// Skip anything that's already been processed.
-		if processed, ok := processedIssuers[issuer]; ok && processed {
+		if _, ok := processedIssuers[issuer]; ok {
 			continue
 		}
 
@@ -562,7 +562,7 @@ func processAnyCliqueOrCycle(
 
 			// Skip potential clique nodes which have already been processed
 			// (either by the topo-sort or by this clique-finding code).
-			if processed, ok := processedIssuers[node]; ok && processed {
+			if _, ok := processedIssuers[node]; ok {
 				continue
 			}
 			if _, ok := closure[node]; ok {
@@ -641,13 +641,13 @@ func processAnyCliqueOrCycle(
 		// For every node we've found...
 		for node := range closure {
 			// Skip anything that's already been processed.
-			if processed, ok := processedIssuers[node]; ok && processed {
+			if _, ok := processedIssuers[node]; ok {
 				continue
 			}
 
 			// Before we begin, mark this node as processed (so we can continue
 			// later) and add children to toVisit.
-			processedIssuers[node] = true
+			processedIssuers[node] = struct{}{}
 			childrenCerts, ok := issuerIdChildrenMap[node]
 			if ok && len(childrenCerts) > 0 {
 				toVisit = append(toVisit, childrenCerts...)
@@ -739,7 +739,7 @@ func processAnyCliqueOrCycle(
 	// unrelated cycle is the parent to that clique+cycle group.
 	for _, issuer := range issuers {
 		// Skip this node if it is already processed.
-		if processed, ok := processedIssuers[issuer]; ok && processed {
+		if _, ok := processedIssuers[issuer]; ok {
 			continue
 		}
 
@@ -776,7 +776,7 @@ func processAnyCliqueOrCycle(
 			// For each node in each cycle
 			for nodeIndex, node := range cycle {
 				// If the node is processed already, skip it.
-				if processed, ok := processedIssuers[node]; ok && processed {
+				if _, ok := processedIssuers[node]; ok {
 					continue
 				}
 
@@ -797,7 +797,7 @@ func processAnyCliqueOrCycle(
 
 				// Finally, mark the node as processed and add the remaining
 				// children to toVisit.
-				processedIssuers[node] = true
+				processedIssuers[node] = struct{}{}
 				childrenCerts, ok := issuerIdChildrenMap[node]
 				if ok && len(childrenCerts) > 0 {
 					toVisit = append(toVisit, childrenCerts...)
@@ -810,7 +810,7 @@ func processAnyCliqueOrCycle(
 }
 
 func findAllCliques(
-	processedIssuers map[issuerID]bool,
+	processedIssuers map[issuerID]struct{},
 	issuerIdCertMap map[issuerID]*x509.Certificate,
 	subjectIssuerIdsMap map[string][]issuerID,
 	issuers []issuerID,
@@ -821,7 +821,7 @@ func findAllCliques(
 
 	for _, node := range issuers {
 		// Check if the node has already been visited...
-		if processed, ok := processedIssuers[node]; ok && processed {
+		if _, ok := processedIssuers[node]; ok {
 			// ...if so it might have had a manually constructed chain; skip
 			// it for clique detection.
 			continue
@@ -858,7 +858,7 @@ func findAllCliques(
 }
 
 func isOnReissuedClique(
-	processedIssuers map[issuerID]bool,
+	processedIssuers map[issuerID]struct{},
 	issuerIdCertMap map[issuerID]*x509.Certificate,
 	subjectIssuerIdsMap map[string][]issuerID,
 	node issuerID,
@@ -929,7 +929,7 @@ func isOnReissuedClique(
 		// Skip already processed nodes, even if they could be clique
 		// candidates. We'll treat them as any other (already processed)
 		// external parent in that scenario.
-		if processed, ok := processedIssuers[candidate]; ok && processed {
+		if _, ok := processedIssuers[candidate]; ok {
 			continue
 		}
 
@@ -1025,7 +1025,7 @@ func canonicalizeCycle(cycle []issuerID) []issuerID {
 }
 
 func findCyclesNearClique(
-	processedIssuers map[issuerID]bool,
+	processedIssuers map[issuerID]struct{},
 	issuerIdCertMap map[issuerID]*x509.Certificate,
 	issuerIdChildrenMap map[issuerID][]issuerID,
 	cliqueNodes []issuerID,
@@ -1080,7 +1080,7 @@ func findCyclesNearClique(
 }
 
 func findAllCyclesWithNode(
-	processedIssuers map[issuerID]bool,
+	processedIssuers map[issuerID]struct{},
 	issuerIdCertMap map[issuerID]*x509.Certificate,
 	issuerIdChildrenMap map[issuerID][]issuerID,
 	source issuerID,
@@ -1142,7 +1142,7 @@ func findAllCyclesWithNode(
 		for _, child := range children {
 			// Ensure we can visit this child; exclude processedIssuers and
 			// exclude lists.
-			if childProcessed, ok := processedIssuers[child]; ok && childProcessed {
+			if _, ok := processedIssuers[child]; ok {
 				continue
 			}
 
@@ -1296,7 +1296,7 @@ func reversedCycle(cycle []issuerID) []issuerID {
 }
 
 func computeParentsFromClosure(
-	processedIssuers map[issuerID]bool,
+	processedIssuers map[issuerID]struct{},
 	issuerIdParentsMap map[issuerID][]issuerID,
 	closure map[issuerID]struct{},
 ) (map[issuerID]bool, bool) {
@@ -1313,7 +1313,7 @@ func computeParentsFromClosure(
 			}
 
 			parents[parent] = true
-			if processed, ok := processedIssuers[parent]; ok && processed {
+			if _, ok := processedIssuers[parent]; ok {
 				continue
 			}
 
