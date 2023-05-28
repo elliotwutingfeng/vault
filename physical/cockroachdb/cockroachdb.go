@@ -326,7 +326,7 @@ func validateDBTable(dbTable string) (err error) {
 	}
 
 	// Disallow SQL keywords as the table name
-	if sqlKeywords[strings.ToUpper(dbTable)] {
+	if _, ok := sqlKeywords[strings.ToUpper(dbTable)]; ok {
 		return fmt.Errorf("name must not be a SQL keyword")
 	}
 
