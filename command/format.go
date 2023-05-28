@@ -455,7 +455,7 @@ func (t TableFormatter) OutputList(ui cli.Ui, secret *api.Secret, data interface
 		var headers []string
 		header := "Keys"
 		if len(additionalInfo) > 0 {
-			seenHeaders := make(map[string]bool)
+			seenHeaders := make(map[string]struct{})
 			for key, rawValues := range additionalInfo {
 				// Most endpoints use the well-behaved ListResponseWithInfo.
 				// However, some use a hand-rolled equivalent, where the
@@ -471,7 +471,7 @@ func (t TableFormatter) OutputList(ui cli.Ui, secret *api.Secret, data interface
 
 				values := rawValues.(map[string]interface{})
 				for key := range values {
-					seenHeaders[key] = true
+					seenHeaders[key] = struct{}{}
 				}
 			}
 
