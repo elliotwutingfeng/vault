@@ -103,10 +103,10 @@ func testRaftHANewCluster(t *testing.T, bundler teststorage.PhysicalBackendBundl
 
 	// Ensure peers are added
 	leaderClient := cluster.Cores[0].Client
-	err := testhelpers.VerifyRaftPeers(t, leaderClient, map[string]bool{
-		"core-0": true,
-		"core-1": true,
-		"core-2": true,
+	err := testhelpers.VerifyRaftPeers(t, leaderClient, map[string]struct{}{
+		"core-0": {},
+		"core-1": {},
+		"core-2": {},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -128,8 +128,8 @@ func testRaftHANewCluster(t *testing.T, bundler teststorage.PhysicalBackendBundl
 	}
 
 	// Ensure peers are removed
-	err = testhelpers.VerifyRaftPeers(t, leaderClient, map[string]bool{
-		"core-0": true,
+	err = testhelpers.VerifyRaftPeers(t, leaderClient, map[string]struct{}{
+		"core-0": {},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -242,10 +242,10 @@ func TestRaft_HA_ExistingCluster(t *testing.T) {
 		joinFunc(cluster.Cores[2].Client)
 
 		// Ensure peers are added
-		err := testhelpers.VerifyRaftPeers(t, leaderClient, map[string]bool{
-			"core-0": true,
-			"core-1": true,
-			"core-2": true,
+		err := testhelpers.VerifyRaftPeers(t, leaderClient, map[string]struct{}{
+			"core-0": {},
+			"core-1": {},
+			"core-2": {},
 		})
 		if err != nil {
 			t.Fatal(err)

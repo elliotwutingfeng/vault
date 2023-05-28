@@ -647,7 +647,7 @@ func GenerateDebugLogs(t testing.T, client *api.Client) chan struct{} {
 // from the map by removing entries whose keys are in the raft configuration.
 // Remaining entries result in an error return so that the caller can poll for
 // an expected configuration.
-func VerifyRaftPeers(t testing.T, client *api.Client, expected map[string]bool) error {
+func VerifyRaftPeers(t testing.T, client *api.Client, expected map[string]struct{}) error {
 	t.Helper()
 
 	resp, err := client.Logical().Read("sys/storage/raft/configuration")

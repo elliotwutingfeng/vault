@@ -190,8 +190,8 @@ func TestRaft_RetryAutoJoin(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	err := testhelpers.VerifyRaftPeers(t, cluster.Cores[0].Client, map[string]bool{
-		"core-0": true,
+	err := testhelpers.VerifyRaftPeers(t, cluster.Cores[0].Client, map[string]struct{}{
+		"core-0": {},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -253,10 +253,10 @@ func TestRaft_Retry_Join(t *testing.T) {
 	vault.TestWaitActive(t, leaderCore.Core)
 
 	corehelpers.RetryUntil(t, 10*time.Second, func() error {
-		return testhelpers.VerifyRaftPeers(t, cluster.Cores[0].Client, map[string]bool{
-			"core-0": true,
-			"core-1": true,
-			"core-2": true,
+		return testhelpers.VerifyRaftPeers(t, cluster.Cores[0].Client, map[string]struct{}{
+			"core-0": {},
+			"core-1": {},
+			"core-2": {},
 		})
 	})
 }
@@ -337,10 +337,10 @@ func TestRaft_RemovePeer(t *testing.T) {
 
 	client := cluster.Cores[0].Client
 
-	err := testhelpers.VerifyRaftPeers(t, client, map[string]bool{
-		"core-0": true,
-		"core-1": true,
-		"core-2": true,
+	err := testhelpers.VerifyRaftPeers(t, client, map[string]struct{}{
+		"core-0": {},
+		"core-1": {},
+		"core-2": {},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -353,9 +353,9 @@ func TestRaft_RemovePeer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = testhelpers.VerifyRaftPeers(t, client, map[string]bool{
-		"core-0": true,
-		"core-1": true,
+	err = testhelpers.VerifyRaftPeers(t, client, map[string]struct{}{
+		"core-0": {},
+		"core-1": {},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -368,8 +368,8 @@ func TestRaft_RemovePeer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = testhelpers.VerifyRaftPeers(t, client, map[string]bool{
-		"core-0": true,
+	err = testhelpers.VerifyRaftPeers(t, client, map[string]struct{}{
+		"core-0": {},
 	})
 	if err != nil {
 		t.Fatal(err)
