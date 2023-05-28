@@ -5,7 +5,7 @@ package policies
 
 import "sort"
 
-// ComparePolicies checks whether the given policy sets are equivalent, as in,
+// EquivalentPolicies checks whether the given policy sets are equivalent, as in,
 // they contain the same values. The benefit of this method is that it leaves
 // the "default" policy out of its comparisons as it may be added later by core
 // after a set of policies has been saved by a backend.
