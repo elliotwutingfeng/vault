@@ -15,7 +15,7 @@ type RoleNoStoreFalse struct {
 	Enabled            bool
 	UnsupportedVersion bool
 
-	AllowedRoles map[string]bool
+	AllowedRoles map[string]struct{}
 
 	RoleListFetchIssue *PathFetch
 	RoleFetchIssues    map[string]*PathFetch
@@ -26,7 +26,7 @@ type RoleNoStoreFalse struct {
 func NewRoleNoStoreFalseCheck() Check {
 	return &RoleNoStoreFalse{
 		RoleFetchIssues: make(map[string]*PathFetch),
-		AllowedRoles:    make(map[string]bool),
+		AllowedRoles:    make(map[string]struct{}),
 		RoleEntryMap:    make(map[string]map[string]interface{}),
 	}
 }
@@ -49,7 +49,7 @@ func (h *RoleNoStoreFalse) LoadConfig(config map[string]interface{}) error {
 	value, present := config["allowed_roles"].([]interface{})
 	if present {
 		for _, rawValue := range value {
-			h.AllowedRoles[rawValue.(string)] = true
+			h.AllowedRoles[rawValue.(string)] = struct{}{}
 		}
 	}
 
