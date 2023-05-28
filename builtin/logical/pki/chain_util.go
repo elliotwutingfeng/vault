@@ -401,8 +401,8 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 				return errutil.InternalError{Err: fmt.Sprintf("error building certificate chain, %d is too many parent certs",
 					len(parentCerts))}
 			}
-			includedParentCerts := make(map[string]bool, len(parentCerts)+1)
-			includedParentCerts[entry.Certificate] = true
+			includedParentCerts := make(map[string]struct{}, len(parentCerts)+1)
+			includedParentCerts[entry.Certificate] = struct{}{}
 			for _, parentCert := range append(roots, intermediates...) {
 				// See discussion of the algorithm above as to why this is
 				// in the correct order. However, note that we do need to
@@ -470,14 +470,13 @@ func (sc *storageContext) rebuildIssuersChains(referenceCert *issuerEntry /* opt
 	return nil
 }
 
-func addToChainIfNotExisting(includedParentCerts map[string]bool, entry *issuerEntry, certToAdd string) {
-	included, ok := includedParentCerts[certToAdd]
-	if ok && included {
+func addToChainIfNotExisting(includedParentCerts map[string]struct{}, entry *issuerEntry, certToAdd string) {
+	if _, ok := includedParentCerts[certToAdd]; ok {
 		return
 	}
 
 	entry.CAChain = append(entry.CAChain, certToAdd)
-	includedParentCerts[certToAdd] = true
+	includedParentCerts[certToAdd] = struct{}{}
 }
 
 func processAnyCliqueOrCycle(
@@ -675,8 +674,8 @@ func processAnyCliqueOrCycle(
 					entry := issuerIdEntryMap[node]
 					entry.CAChain = []string{entry.Certificate}
 
-					includedParentCerts := make(map[string]bool, len(closure)+1)
-					includedParentCerts[entry.Certificate] = true
+					includedParentCerts := make(map[string]struct{}, len(closure)+1)
+					includedParentCerts[entry.Certificate] = struct{}{}
 
 					// First add nodes from this clique, then all cycles, and then
 					// all other cliques.
@@ -709,8 +708,8 @@ func processAnyCliqueOrCycle(
 					entry := issuerIdEntryMap[node]
 					entry.CAChain = []string{entry.Certificate}
 
-					includedParentCerts := make(map[string]bool, len(closure)+1)
-					includedParentCerts[entry.Certificate] = true
+					includedParentCerts := make(map[string]struct{}, len(closure)+1)
+					includedParentCerts[entry.Certificate] = struct{}{}
 
 					// First add nodes from this cycle, then all cliques, then all
 					// other cycles, and finally from parents.
@@ -786,8 +785,8 @@ func processAnyCliqueOrCycle(
 				entry.CAChain = []string{entry.Certificate}
 
 				// No indication as to size of chain here
-				includedParentCerts := make(map[string]bool)
-				includedParentCerts[entry.Certificate] = true
+				includedParentCerts := make(map[string]struct{})
+				includedParentCerts[entry.Certificate] = struct{}{}
 
 				// First add nodes from this cycle, then all other cycles, and
 				// finally from parents.
@@ -1328,7 +1327,7 @@ func computeParentsFromClosure(
 func addNodeCertsToEntry(
 	issuerIdEntryMap map[issuerID]*issuerEntry,
 	issuerIdChildrenMap map[issuerID][]issuerID,
-	includedParentCerts map[string]bool,
+	includedParentCerts map[string]struct{},
 	entry *issuerEntry,
 	issuersCollection ...[]issuerID,
 ) {
@@ -1345,7 +1344,7 @@ func addNodeCertsToEntry(
 			foundChild := false
 			for _, child := range children {
 				childEntry := issuerIdEntryMap[child]
-				if inChain, ok := includedParentCerts[childEntry.Certificate]; ok && inChain {
+				if _, ok := includedParentCerts[childEntry.Certificate]; ok {
 					foundChild = true
 					break
 				}
@@ -1370,7 +1369,7 @@ func addNodeCertsToEntry(
 
 func addParentChainsToEntry(
 	issuerIdEntryMap map[issuerID]*issuerEntry,
-	includedParentCerts map[string]bool,
+	includedParentCerts map[string]struct{},
 	entry *issuerEntry,
 	parents map[issuerID]bool,
 ) {
