@@ -212,7 +212,7 @@ func TestDynamicSystemView_GeneratePasswordFromPolicy_successful(t *testing.T) {
 	ctx = namespace.RootContext(ctx)
 	dsv := TestDynamicSystemView(cluster.Cores[0].Core, nil)
 
-	runeset := map[rune]bool{}
+	runeset := map[rune]struct{}{}
 	runesFound := []rune{}
 
 	for i := 0; i < 100; i++ {
@@ -221,10 +221,10 @@ func TestDynamicSystemView_GeneratePasswordFromPolicy_successful(t *testing.T) {
 			t.Fatalf("no error expected, but got: %s", err)
 		}
 		for _, r := range actual {
-			if runeset[r] {
+			if _, ok := runeset[r]; ok {
 				continue
 			}
-			runeset[r] = true
+			runeset[r] = struct{}{}
 			runesFound = append(runesFound, r)
 		}
 	}
